@@ -24,7 +24,7 @@ void App::initWindow()
 void App::createInstance()
 {
     //Check ValidationLayers only in debug mode
-    if (enableValidationLayers) checkValidationLayerSupport();
+    if (enableDebugSteps) checkValidationLayerSupport();
 
     //Optional. Application Info.
     VkApplicationInfo appInfo{};
@@ -39,7 +39,7 @@ void App::createInstance()
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
-    if (enableValidationLayers) {
+    if (enableDebugSteps) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
     }
@@ -47,14 +47,13 @@ void App::createInstance()
         createInfo.enabledLayerCount = 0;
     }
 
-    //Get the extensions form GLFW
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
+ 
 
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    createInfo.enabledExtensionCount = glfwExtensionCount;
-    createInfo.ppEnabledExtensionNames = glfwExtensions;
+    
+    auto extensions = getRequiredExtension();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
     createInfo.enabledLayerCount = 0;
 
@@ -63,14 +62,34 @@ void App::createInstance()
         throw std::runtime_error("failed to create instance!");
     }
 
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> extensions(extensionCount);
+    if (enableDebugSteps) {
+        //Get all Vulkan supported extensions to print them or check which they are
+        uint32_t extensionCount = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+        std::vector<VkExtensionProperties> extensions(extensionCount);
 
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-    //CREATE FUNCTION TO CHECK ALL GLFW EXTENSIONS ARE IN THE SUPPORTED LIST
-    checkGLFWExtensions(extensions, createInfo);
+        //CREATE FUNCTION TO CHECK ALL GLFW EXTENSIONS ARE IN THE SUPPORTED LIST
+        checkGLFWExtensions(extensions, createInfo);
+    }
+}
+
+std::vector<const char*> App::getRequiredExtension()
+{
+    //Get the extensions for GLFW
+    uint32_t glfwExtensionCount = 0;
+    const char** glfwExtensions;
+
+    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+    if (enableDebugSteps) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    return extensions;
 }
 
 void App::checkGLFWExtensions(const std::vector<VkExtensionProperties>& extensions, const VkInstanceCreateInfo& createInfo)

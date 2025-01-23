@@ -13,9 +13,9 @@ const std::vector<const char*> validationLayers = {
 
 //Run validation layers only in debug
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+const bool enableDebugSteps = false;
 #else
-const bool enableValidationLayers = true;
+const bool enableDebugSteps = true;
 #endif
 
 
@@ -26,6 +26,7 @@ public:
 private:
 	void initWindow();
 	void createInstance();
+	std::vector<const char*> getRequiredExtension();
 	void checkGLFWExtensions(const std::vector<VkExtensionProperties>& extensions, const VkInstanceCreateInfo& createInfo);
 	void checkValidationLayerSupport();
 	void initVulkan();
